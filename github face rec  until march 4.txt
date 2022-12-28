@@ -1,3 +1,0 @@
-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
-
-git push https://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@github.com/BarrelOfTea/Face_recognition
