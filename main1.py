@@ -22,6 +22,8 @@ class FaceRecApp(App):
         self.running = True
         self.thresh = 0
         self.ear = 0
+        self.flag = 0
+        self.frame_check = 20
 
         layout = BoxLayout(orientation = "vertical")
         self.image = Image()
@@ -58,6 +60,7 @@ class FaceRecApp(App):
 
     def adjust(self, *args):
         self.thresh = self.ear
+
     
     def quit(self, *args):
         cv2.destroyAllWindows()
@@ -84,12 +87,6 @@ class FaceRecApp(App):
         texture.blit_buffer(buffer, colorfmt='bgr', bufferfmt='ubyte')
         self.image.texture = texture
 
-        frame_check = 20
-    
-
-        flag=0
-
-   
         ret, frame= self.cap.read()
 
         frame = imutils.resize(frame, width=450)
@@ -100,7 +97,6 @@ class FaceRecApp(App):
             if self.thresh == 0:
                 cv2.putText(frame, "thresh is {} Press s to establish your eye threshhold".format(self.thresh), (30,30), 
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
-
 
             shape = self.predict(gray, subject)
             shape = face_utils.shape_to_np(shape)#converting to NumPy Array
@@ -115,17 +111,18 @@ class FaceRecApp(App):
             cv2.drawContours(frame, [rightEyeHull], -1, (0, 255, 0), 1)
 
             if self.ear < self.thresh:
-                flag += 1
-
-                if flag >= frame_check:
+                self.flag += 1
+                if self.flag >= self.frame_check:
                     cv2.putText(frame, "****************ALERT!****************", (10, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
                     cv2.putText(frame, "****************ALERT!****************", (10,325),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-                    self.playsound()
+                    if self.sound.state=='stop':
+                        self.playsound()
             else:
-                flag = 0
-                self.sound.stop()
+                self.flag = 0
+                if self.sound.state == 'play':
+                    self.sound.stop()
 
         buffer = cv2.flip(frame, 0).tostring()
         texture = Texture.create(size=(frame.shape[1], frame.shape[0]), colorfmt='bgr')
